@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<schema name="vetsearch" version="1.0">
+  <document name="vetsearch">
+    <field name="id" type="string" indexing="attribute | summary" />
+    <field name="contents" type="string" indexing="index | summary" />
+    <field name="dense_embedding" type="tensor<float>(d0[768])" indexing="attribute" />
+    <field name="multi_vector" type="tensor<float>(x{},d0[768])" indexing="attribute" />
+    <field name="sparse_vector" type="tensor<float>(x{})" indexing="attribute" />
+    <field name="course_id" type="string" indexing="attribute | summary" />
+    <field name="activity_id" type="string" indexing="attribute | summary" />
+    <field name="course_name" type="string" indexing="attribute | summary" />
+    <field name="activity_name" type="string" indexing="attribute | summary" />
+    <field name="activity_type" type="string" indexing="attribute | summary" />
+    <field name="strand" type="string" indexing="attribute | summary" />
+  </document>
+
+  <!-- Rank profiles for different search methods -->
+  <rank-profile name="bm25" inherits="default">
+    <first-phase>
+      <expression>bm25(contents)</expression>
+    </first-phase>
+  </rank-profile>
+
+  <rank-profile name="dense" inherits="default">
+    <first-phase>
+      <expression>closeness(field, dense_embedding)</expression>
+    </first-phase>
+  </rank-profile>
+
+  <rank-profile name="multi_vector" inherits="default">
+    <first-phase>
+      <expression>max(foreach(x, multi_vector, dot(x, query(q))))</expression>
+    </first-phase>
+  </rank-profile>
+
+  <rank-profile name="sparse" inherits="default">
+    <first-phase>
+      <expression>dotProduct(sparse_vector, query(q))</expression>
+    </first-phase>
+  </rank-profile>
+
+  <rank-profile name="hybrid" inherits="default">
+    <first-phase>
+      <expression>0.4 * bm25(contents) + 0.3 * closeness(field, dense_embedding) + 0.3 * max(foreach(x, multi_vector, dot(x, query(q))))</expression>
+    </first-phase>
+  </rank-profile>
+</schema>

@@ -1,0 +1,44 @@
+services:
+  vespa:
+    image: vespaengine/vespa:latest
+    ports:
+      - "8080:8080"
+      - "19071:19071"
+    volumes:
+      - ./vespa:/app
+    environment:
+      - VESPA_CONFIGSERVERS=vespa
+    command: >
+      sh -c "
+        /opt/vespa/bin/vespa-start-configserver &&
+        sleep 30 &&
+        /opt/vespa/bin/vespa-deploy prepare /app &&
+        /opt/vespa/bin/vespa-deploy activate &&
+        /opt/vespa/bin/vespa-start-services &&
+        tail -f /dev/null
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19071/state/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - vespa
+    volumes:
+      - ./data:/app/data
+      - ./embeddings:/app/embeddings
+      - ./ingestion:/app/ingestion
+    environment:
+      - VESPA_ENDPOINT=http://vespa:8080
+
+  embedding-service:
+    build: ./embeddings
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    command: ["python", "generate_embeddings.py"]
