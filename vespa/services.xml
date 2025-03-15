@@ -1,0 +1,20 @@
+<services version="1.0">
+  <admin version="4.0">
+    <adminserver hostalias="node0" />
+  </admin>
+  <container id="default" version="1.0">
+    <http>
+      <server id="default" port="8080" />
+    </http>
+    <document-api />
+  </container>
+  <content id="search" version="1.0">
+    <redundancy>1</redundancy>
+    <documents>
+      <document type="vetsearch" mode="index" />
+    </documents>
+    <nodes>
+      <node hostalias="node0" />
+    </nodes>
+  </content>
+</services>

@@ -1,0 +1,17 @@
+schema vetsearch {
+  document vetsearch {
+    field id type string { indexing: attribute | summary }
+    field contents type string { indexing: index | summary }
+    field dense_embedding type tensor<float>(d0[768]) { indexing: attribute }
+    field multi_vector type tensor<float>(x{}, d0[768]) { indexing: attribute }
+    field sparse_vector type tensor<float>(x{}) { indexing: attribute }
+    field course_id type string { indexing: attribute | summary }
+    field activity_id type string { indexing: attribute | summary }
+    field strand type string { indexing: attribute | summary }
+  }
+
+  rank-profile bm25 inherits default { first-phase { expression: bm25(contents) } }
+  rank-profile dense inherits default { first-phase { expression: closeness(dense_embedding, query(dense_embedding)) } }
+  rank-profile multi_vector inherits default { first-phase { expression: max(dot(multi_vector, query(multi_vector))) } }
+  rank-profile sparse inherits default { first-phase { expression: sum(dot(sparse_vector, query(sparse_vector))) } }
+}

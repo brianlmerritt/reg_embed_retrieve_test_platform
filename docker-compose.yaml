@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  vespa:
+    image: vespaengine/vespa
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./vespa:/vespa-app
+    command: >
+      sh -c "
+        /opt/vespa/bin/vespa-deploy prepare /vespa-app &&
+        /opt/vespa/bin/vespa-deploy activate &&
+        /opt/vespa/bin/vespa-start-services &&
+        tail -f /dev/null
+      "
+
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - vespa
+    volumes:
+      - ./data:/app/data
